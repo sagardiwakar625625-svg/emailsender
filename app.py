@@ -1,23 +1,21 @@
 from flask import Flask, render_template, request
 import smtplib
 import re
-from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/send', methods=['POST'])
+@app.route("/send", methods=["POST"])
 def send():
-
-    sender_name = request.form['name']
-    gmail_user = request.form['email']
-    gmail_password = request.form['app_password']
-    emails = request.form['emails']
-    subject = request.form['subject']
-    message = request.form['message']
+    sender_name = request.form["name"]
+    gmail_user = request.form["gmail"]
+    gmail_password = request.form["password"]
+    emails = request.form["emails"]
+    subject = request.form["subject"]
+    message = request.form["message"]
 
     receiver_list = [
         email.strip()
@@ -26,36 +24,86 @@ def send():
     ]
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
         server.starttls()
         server.login(gmail_user, gmail_password)
 
         for receiver in receiver_list:
+            body = f"""Subject: {subject}
 
-            body = f"""
-Name: {sender_name}
-
-Message:
 {message}
+
+----------------
+Sent by: {sender_name}
+Email: {gmail_user}
 """
 
-            msg = MIMEText(body)
-            msg["Subject"] = subject
-            msg["From"] = gmail_user
-            msg["To"] = receiver
-
-            server.sendmail(
-                gmail_user,
-                receiver,
-                msg.as_string()
-            )
+            server.sendmail(gmail_user, receiver, body)
 
         server.quit()
 
-        return f"✅ Email Sent To {len(receiver_list)} People"
+        return f"""
+        <h2>✅ Email Sent To {len(receiver_list)} People</h2>
+        <br>
+        <a href="/">Send More</a>
+        """
 
     except Exception as e:
-        return f"❌ Error: {e}"
+        return f"<h3>Error:</h3><pre>{str(e)}</pre>"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)from flask import Flask, render_template, request
+import smtplib
+import re
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/send", methods=["POST"])
+def send():
+    sender_name = request.form["name"]
+    gmail_user = request.form["gmail"]
+    gmail_password = request.form["password"]
+    emails = request.form["emails"]
+    subject = request.form["subject"]
+    message = request.form["message"]
+
+    receiver_list = [
+        email.strip()
+        for email in re.split(r'[\n,]+', emails)
+        if email.strip()
+    ]
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
+        server.starttls()
+        server.login(gmail_user, gmail_password)
+
+        for receiver in receiver_list:
+            body = f"""Subject: {subject}
+
+{message}
+
+----------------
+Sent by: {sender_name}
+Email: {gmail_user}
+"""
+
+            server.sendmail(gmail_user, receiver, body)
+
+        server.quit()
+
+        return f"""
+        <h2>✅ Email Sent To {len(receiver_list)} People</h2>
+        <br>
+        <a href="/">Send More</a>
+        """
+
+    except Exception as e:
+        return f"<h3>Error:</h3><pre>{str(e)}</pre>"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
