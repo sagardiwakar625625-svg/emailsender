@@ -24,8 +24,8 @@ def send():
     ]
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
-        server.starttls()
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15)
+
         server.login(gmail_user, gmail_password)
 
         for receiver in receiver_list:
